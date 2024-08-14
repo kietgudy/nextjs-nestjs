@@ -1,7 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UsersService } from '@/users/users.service';
 import { comparePassword } from '@/helpers/utils';
 import { JwtService } from '@nestjs/jwt';
+import { IUser } from '@/users/users.interface';
 
 @Injectable()
 export class AuthService {
@@ -10,15 +11,17 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async signIn(username: string, pass: string): Promise<any> {
+  async validateUser(username: string, pass: string): Promise<any> {
     const user = await this.usersService.findOneByEmail(username);
     const isValid = await comparePassword(pass, user.password);
-    if (!isValid) {
-      throw new UnauthorizedException("Username/password không hợp lệ");
-    }
-    const payload = { sub: user._id, username: user.email };
+    if (!user || !isValid) return null;
+    return user;
+  }
+
+  async login(user: IUser) {
+    const payload = { username: user.email, sub: user._id };
     return {
-      access_token: await this.jwtService.signAsync(payload),
+      access_token: this.jwtService.sign(payload),
     };
   }
 }
