@@ -7,6 +7,9 @@ import { User } from './schemas/user.schema';
 import mongoose, { Model } from 'mongoose';
 import { genSaltSync, hashSync } from 'bcrypt';
 import aqp from 'api-query-params';
+import { CreateAuthDto } from '@/auth/dto/create-auth.dto';
+import { v4 as uuidv4 } from 'uuid';
+import * as dayjs from 'dayjs'
 
 @Injectable()
 export class UsersService {
@@ -34,6 +37,25 @@ export class UsersService {
     });
     return newUser;
   }
+
+  async register(user: CreateAuthDto) {
+    const { name, email, password } = user;
+    const isExist = await this.userModel.findOne({ email });
+    if (isExist) {
+      throw new BadRequestException(`Email ${email} đã tồn tại`);
+    }
+    const hashPassword = this.getHashPassword(password);
+    const newRegister = await this.userModel.create({
+      name,
+      email,
+      password: hashPassword,
+      isActive: false,
+      codeId: uuidv4(),
+      codeExpired: dayjs().add(2, 'minutes')
+    });
+    return newRegister;
+  }
+
 
   async findAll(currentPage: number, limit: number, qs: string) {
     const { filter, sort, population } = aqp(qs);
