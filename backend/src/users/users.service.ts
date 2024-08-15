@@ -9,11 +9,15 @@ import { genSaltSync, hashSync } from 'bcrypt';
 import aqp from 'api-query-params';
 import { CreateAuthDto } from '@/auth/dto/create-auth.dto';
 import { v4 as uuidv4 } from 'uuid';
-import * as dayjs from 'dayjs'
+import * as dayjs from 'dayjs';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    private readonly mailerService: MailerService,
+  ) {}
 
   getHashPassword = (password: string) => {
     const salt = genSaltSync(10);
@@ -45,17 +49,27 @@ export class UsersService {
       throw new BadRequestException(`Email ${email} đã tồn tại`);
     }
     const hashPassword = this.getHashPassword(password);
+    const codeId = uuidv4();
     const newRegister = await this.userModel.create({
       name,
       email,
       password: hashPassword,
       isActive: false,
-      codeId: uuidv4(),
-      codeExpired: dayjs().add(2, 'minutes')
+      codeId,
+      codeExpired: dayjs().add(2, 'minutes'),
     });
+    //send mail
+    this.mailerService.sendMail({
+      to: newRegister.email, // list of receivers
+      subject: 'Activate your account', // Subject line
+      template: "register",
+      context: {
+        name: newRegister?.name ?? newRegister.email,
+        activationCode: codeId
+      }
+    })
     return newRegister;
   }
-
 
   async findAll(currentPage: number, limit: number, qs: string) {
     const { filter, sort, population } = aqp(qs);
@@ -89,10 +103,9 @@ export class UsersService {
   }
 
   findOneByEmail(email: string) {
-    return this.userModel
-      .findOne({
-        email,
-      })
+    return this.userModel.findOne({
+      email,
+    });
   }
 
   async update(updateUserDto: UpdateUserDto) {
@@ -107,6 +120,6 @@ export class UsersService {
 
   async remove(_id: string) {
     if (!mongoose.Types.ObjectId.isValid(_id)) return 'Not found user';
-    return this.userModel.deleteOne({_id});
+    return this.userModel.deleteOne({ _id });
   }
 }
