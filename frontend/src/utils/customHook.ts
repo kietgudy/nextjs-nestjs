@@ -8,4 +8,3 @@ export const useHasMounted = () => {
 
     return hasMounted;
 }
-
