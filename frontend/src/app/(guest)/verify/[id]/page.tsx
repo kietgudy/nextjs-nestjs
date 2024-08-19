@@ -1,9 +1,13 @@
-import React from 'react'
+import Verify from "@/components/auth/verify";
+import React from "react";
 
 const VerifyPage = ({ params }: { params: { id: string } }) => {
+  const { id } = params;
   return (
-    <div>VerifyPage</div>
-  )
-}
+    <>
+      <Verify id={id} />
+    </>
+  );
+};
 
-export default VerifyPage
+export default VerifyPage;
