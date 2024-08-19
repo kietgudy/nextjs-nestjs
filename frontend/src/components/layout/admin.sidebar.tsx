@@ -22,7 +22,7 @@ const AdminSideBar = () => {
 
         {
             key: 'grp',
-            label: 'Hỏi Dân IT',
+            label: 'App Manager',
             type: 'group',
             children: [
                 {
