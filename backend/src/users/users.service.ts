@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  Injectable,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -7,7 +11,7 @@ import { User } from './schemas/user.schema';
 import mongoose, { Model } from 'mongoose';
 import { genSaltSync, hashSync } from 'bcrypt';
 import aqp from 'api-query-params';
-import { CreateAuthDto } from '@/auth/dto/create-auth.dto';
+import { CheckCodeAuthDto, CreateAuthDto } from '@/auth/dto/create-auth.dto';
 import { v4 as uuidv4 } from 'uuid';
 import * as dayjs from 'dayjs';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -62,12 +66,12 @@ export class UsersService {
     this.mailerService.sendMail({
       to: newRegister.email, // list of receivers
       subject: 'Activate your account', // Subject line
-      template: "register",
+      template: 'register',
       context: {
         name: newRegister?.name ?? newRegister.email,
-        activationCode: codeId
-      }
-    })
+        activationCode: codeId,
+      },
+    });
     return newRegister;
   }
 
@@ -121,5 +125,22 @@ export class UsersService {
   async remove(_id: string) {
     if (!mongoose.Types.ObjectId.isValid(_id)) return 'Not found user';
     return this.userModel.deleteOne({ _id });
+  }
+
+  async handleCheckCode(data: CheckCodeAuthDto) {
+    const user = await this.userModel.findOne({
+      _id: data._id,
+      codeId: data.code,
+    });
+    if (!user) {
+      throw new BadGatewayException('Mã code không hợp lệ hoặc đã hết hạn');
+    }
+    const isBeforeCheck = dayjs().isBefore(user.codeExpired);
+    if (isBeforeCheck) {
+      await this.userModel.updateOne({ _id: data._id }, { isActive: true });
+    } else {
+      throw new BadGatewayException('Mã code không hợp lệ hoặc đã hết hạn');
+    }
+    return isBeforeCheck;
   }
 }

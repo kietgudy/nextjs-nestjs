@@ -3,7 +3,7 @@ import { UsersService } from '@/users/users.service';
 import { comparePassword } from '@/helpers/utils';
 import { JwtService } from '@nestjs/jwt';
 import { IUser } from '@/users/users.interface';
-import { CreateAuthDto } from './dto/create-auth.dto';
+import { CheckCodeAuthDto, CreateAuthDto } from './dto/create-auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -34,5 +34,8 @@ export class AuthService {
 
   async register(user: CreateAuthDto) {
     return await this.usersService.register(user);
+  }
+  async checkCode(data: CheckCodeAuthDto) {
+    return await this.usersService.handleCheckCode(data);
   }
 }
