@@ -143,4 +143,25 @@ export class UsersService {
     }
     return isBeforeCheck;
   }
+  async handleActive(email: string) {
+    const user = await this.userModel.findOne({email})
+    if(!user) {
+      throw new BadRequestException("Tài khoản không tồn tại")
+    }
+    const codeId = uuidv4()
+    await user.updateOne({
+      codeId: codeId,
+      codeExpired: dayjs().add(5, 'minutes')
+    })
+    this.mailerService.sendMail({
+      to: user.email, // list of receivers
+      subject: 'Activate your account', // Subject line
+      template: 'register',
+      context: {
+        name: user?.name ?? user.email,
+        activationCode: codeId,
+      },
+    });
+    return {_id: user._id}
+  }
 }
