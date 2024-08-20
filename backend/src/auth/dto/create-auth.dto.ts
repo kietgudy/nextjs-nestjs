@@ -14,3 +14,13 @@ export class CheckCodeAuthDto {
     @IsNotEmpty({message: "Code không được để trống"})
     code: string
 }
+export class ChangePasswordAuthDto {
+    @IsNotEmpty({message: "Code không được để trống"})
+    code: string
+    @IsNotEmpty({message: "Mật khẩu không được để trống"})
+    password: string
+    @IsNotEmpty({message: "Mật khẩu xác nhận không được để trống"})
+    confirmPassword: string
+    @IsNotEmpty({message: "Email không được để trống"})
+    email: string
+}
