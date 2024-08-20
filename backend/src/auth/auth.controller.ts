@@ -50,7 +50,7 @@ export class AuthController {
   }
   @Post('change-password')
   @Public()
-  changePassword(@Body("email") data: ChangePasswordAuthDto) {
+  changePassword(@Body() data: ChangePasswordAuthDto) {
     return this.authService.changePassword(data);
   }
 

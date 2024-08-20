@@ -190,7 +190,7 @@ export class UsersService {
     return { _id: user._id, email: user.email };
   }
   async handleChangePassword(data: ChangePasswordAuthDto) {
-    if (data?.confirmPassword !== data?.password) {
+    if (data.confirmPassword !== data.password) {
       throw new BadRequestException(
         'Mật khẩu và mật khẩu xác nhận không chính xác',
       );
@@ -201,9 +201,9 @@ export class UsersService {
     }
     const isBeforeCheck = dayjs().isBefore(user.codeExpired);
     if (isBeforeCheck) {
-      const newPassword = await this.getHashPassword(data.password);
+      const newPassword = this.getHashPassword(data.password);
       await user.updateOne({ password: newPassword });
-      return;
+      return isBeforeCheck;
     } else {
       throw new BadGatewayException('Mã code không hợp lệ hoặc đã hết hạn');
     }
